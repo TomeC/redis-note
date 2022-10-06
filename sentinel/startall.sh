@@ -1,9 +1,9 @@
 #!/bin/bash
-/root/redis-5.0.8/src/redis-server ./6379/redis.conf
-/root/redis-5.0.8/src/redis-server ./6378/redis.conf
-/root/redis-5.0.8/src/redis-server ./6377/redis.conf
+cd 6377 && sh start.sh
+cd ../6378 && sh start.sh
+cd ../6379 && sh start.sh
 sleep 2
-/root/redis-5.0.8/src/redis-sentinel ./26377/sentinel.conf
-/root/redis-5.0.8/src/redis-sentinel ./26378/sentinel.conf
-/root/redis-5.0.8/src/redis-sentinel ./26379/sentinel.conf
+cd ../26377 && sh start.sh
+cd ../26378 && sh start.sh
+cd ../26379 && sh start.sh
 
