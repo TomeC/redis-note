@@ -2,8 +2,8 @@
 *.o
 *.log
 *.pid
-*.rdb
-*.aof
+# *.rdb
+# *.aof
 redis-benchmark
 redis-check-aof
 redis-check-rdb
