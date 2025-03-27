@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "zmalloc.h": "c",
+        "climits": "cpp",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "utility": "c",
+        "*.tcc": "c",
+        "testhelp.h": "c",
+        "memory_resource": "cpp",
+        "ratio": "cpp"
+    }
+}
