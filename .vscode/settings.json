@@ -9,6 +9,15 @@
         "*.tcc": "c",
         "testhelp.h": "c",
         "memory_resource": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "atomic": "cpp",
+        "cstdint": "cpp",
+        "chrono": "c",
+        "compare": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "istream": "c",
+        "ostream": "c"
     }
 }

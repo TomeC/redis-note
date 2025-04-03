@@ -87,33 +87,17 @@ static inline char sdsReqType(size_t string_size)
 #endif
 }
 
-/* Create a new sds string with the content specified by the 'init' pointer
- * and 'initlen'.
- * If NULL is used for 'init' the string is initialized with zero bytes.
- * If SDS_NOINIT is used, the buffer is left uninitialized;
- *
- * The string is always null-termined (all the sds strings are, always) so
- * even if you create an sds string with:
- *
- * mystring = sdsnewlen("abc",3);
- *
- * You can print the string with printf() as there is an implicit \0 at the
- * end of the string. However the string is binary safe and can contain
- * \0 characters in the middle, as the length is stored in the sds header. */
 sds sdsnewlen(const void *initp, size_t initlen)
 {
     void *sh;                        // 结构体的起始位置
     sds s;                           // sds = char * 结构体字符串的指针
     char type = sdsReqType(initlen); // 根据字符串的长度获取适合的hdr
-    // 初始化长度为0的sds通常是为了追加数据，直接使用SDS_TYPE_8
-    if (type == SDS_TYPE_5 && initlen == 0)
-    {
-        type = SDS_TYPE_8;
-    }
+
     int hdrlen = sdsHdrSize(type);
     unsigned char *fp; /* flags pointer. */
-
-    sh = s_malloc(hdrlen + initlen + 1); // +1 是为了存'\0'
+    // 如果是sds5需初始化0b11111长度
+    size_t mallocInitLen = (type == SDS_TYPE_5 ? SDS_TYPE_5_ALLOC : initlen) + hdrlen + 1;
+    sh = s_malloc(mallocInitLen); // +1 是为了存'\0'
     if (initp == SDS_NOINIT)
     { // 直接==比较字符串要保证不是malloc出来的
         initp = NULL;
@@ -269,13 +253,6 @@ sds sdsMakeRoomFor(sds s, size_t addlen)
     }
 
     type = sdsReqType(newlen);
-
-    if (type == SDS_TYPE_5)
-    {
-        // 扩容不允许使用SDS_TYPE_5，因为它无法扩容
-        type = SDS_TYPE_8;
-    }
-
     hdrlen = sdsHdrSize(type);
     if (oldtype == type)
     {
@@ -374,7 +351,7 @@ size_t sdsAllocSize(sds s)
 
 /* Return the pointer of the actual SDS allocation (normally SDS strings
  * are referenced by the start of the string buffer). */
-// 保存数据的起始指针
+// 返回数据的起始指针
 void *sdsAllocPtr(sds s)
 {
     return (void *)(s - sdsHdrSize(s[-1]));
@@ -619,12 +596,11 @@ sds sdsfromlonglong(long long value)
     return sdsnewlen(buf, len);
 }
 
-/* Like sdscatprintf() but gets va_list instead of being variadic. */
 sds sdscatvprintf(sds s, const char *fmt, va_list ap)
 {
     va_list cpy;
     char staticbuf[1024], *buf = staticbuf, *t;
-    size_t buflen = strlen(fmt) * 2;
+    size_t buflen = strlen(fmt) * 2; // buflen的长度是经验长度，不如"hello %s",一般fmt的长度乘以2是合适的
 
     /* We try to start using a static buffer for speed.
      * If not possible we revert to heap allocation. */
@@ -638,33 +614,27 @@ sds sdscatvprintf(sds s, const char *fmt, va_list ap)
     {
         buflen = sizeof(staticbuf);
     }
+    // vasprintf 不是标准 C 函数，而是 GNU 扩展，在 glibc 中可用,vsnprintf 计算长度
+    // 通过多次循环的方式赋值，大部分应该是正常的，可以使用 len=vsnprintf(NULL, 0, fmt, cpy); 取代while死循环
 
-    // todo 通过多次循环的方式赋值，大部分应该是正常的，可以使用 len=vsnprintf(NULL, 0, fmt, cpy); 优化
-    while (1)
+    buf[buflen - 2] = '\0';
+    va_copy(cpy, ap);
+    vsnprintf(buf, buflen, fmt, cpy); // 内部vasprintf (&result, format, args);先创建buf，再释放
+    va_end(cpy);
+    if (buf[buflen - 2] != '\0')
     {
-        buf[buflen - 2] = '\0';
-        va_copy(cpy, ap);
+        // buf的长度不足，需要扩容，先获取长度，然后再转
+        buflen = vsnprintf(NULL, 0, fmt, cpy);
+        buf = s_malloc(buflen + 1);
         vsnprintf(buf, buflen, fmt, cpy);
-        va_end(cpy);
-        if (buf[buflen - 2] != '\0')
-        {
-            if (buf != staticbuf)
-            {
-                s_free(buf);
-            }
-            buflen *= 2;
-            buf = s_malloc(buflen);
-            if (buf == NULL)
-                return NULL;
-            continue;
-        }
-        break;
+        buf[buflen] = '\0';
     }
-
-    /* Finally concat the obtained string to the SDS string and return it. */
+    // 拼接buf到s
     t = sdscat(s, buf);
     if (buf != staticbuf)
+    {
         s_free(buf);
+    }
     return t;
 }
 
@@ -1380,7 +1350,7 @@ void *sds_realloc(void *ptr, size_t size) { return s_realloc(ptr, size); }
 void sds_free(void *ptr) { s_free(ptr); }
 
 // sds单元测试用例
-// #if defined(SDS_TEST_MAIN)
+#if defined(SDS_TEST_MAIN)
 #include <stdio.h>
 #include "testhelp.h"
 #include "limits.h"
@@ -1520,7 +1490,7 @@ int sdsTest(void)
             sdsfree(x);
             sdsfree(y);
             x = sdsnew("0");
-            test_cond("sdsnew() free/len buffers", sdslen(x) == 1 && sdsavail(x) == 0);
+            test_cond("sdsnew() free/len buffers", sdslen(x) == 1 && sdsavail(x) == 30);
 
             /* Run the test a few times in order to hit the first two
              * SDS header types. */
@@ -1529,13 +1499,15 @@ int sdsTest(void)
                 int oldlen = sdslen(x);
                 x = sdsMakeRoomFor(x, step);
                 int type = x[-1] & SDS_TYPE_MASK;
-
                 test_cond("sdsMakeRoomFor() len", sdslen(x) == oldlen);
                 if (type != SDS_TYPE_5)
                 {
+                    // SDS_TYPE_5 的sdsavail是0
                     test_cond("sdsMakeRoomFor() free", sdsavail(x) >= step);
-                    oldfree = sdsavail(x);
                 }
+
+                oldfree = sdsavail(x);
+
                 p = x + oldlen;
                 for (j = 0; j < step; j++)
                 {
@@ -1553,7 +1525,7 @@ int sdsTest(void)
     test_report();
     return 0;
 }
-// #endif
+#endif
 
 // 执行单元测试 gcc -g -o sdsmain sds.c zmalloc.c -DSDS_TEST_MAIN
 #ifdef SDS_TEST_MAIN

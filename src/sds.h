@@ -88,6 +88,7 @@ struct __attribute__((__packed__)) sdshdr64
 #define SDS_HDR_VAR(T, s) struct sdshdr##T *sh = (void *)((s) - (sizeof(struct sdshdr##T))); // s指向字符串，回退到头指针的位置
 #define SDS_HDR(T, s) ((struct sdshdr##T *)((s) - (sizeof(struct sdshdr##T))))
 #define SDS_TYPE_5_LEN(f) ((f) >> SDS_TYPE_BITS)
+#define SDS_TYPE_5_ALLOC 31
 
 static inline size_t sdslen(const sds s)
 {
@@ -115,7 +116,7 @@ static inline size_t sdsavail(const sds s)
     {
     case SDS_TYPE_5:
     {
-        return 0;
+        return SDS_TYPE_5_ALLOC - SDS_TYPE_5_LEN(flags);
     }
     case SDS_TYPE_8:
     {
