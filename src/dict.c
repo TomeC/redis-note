@@ -121,7 +121,6 @@ dict *dictCreate(dictType *type,
     return d;
 }
 
-/* Initialize the hash table */
 int _dictInit(dict *d, dictType *type,
               void *privDataPtr)
 {
@@ -151,8 +150,7 @@ int dictResize(dict *d)
 // 创建或扩容hash
 int dictExpand(dict *d, unsigned long size)
 {
-    /* the size is invalid if it is smaller than the number of
-     * elements already inside the hash table */
+    // 正在扩容或者hash表的key数量大于要分配的空间
     if (dictIsRehashing(d) || d->ht[0].used > size)
     {
         return DICT_ERR;
@@ -161,9 +159,10 @@ int dictExpand(dict *d, unsigned long size)
     dictht n;
     unsigned long realsize = _dictNextPower(size);
 
-    /* Rehashing to the same table size is not useful. */
     if (realsize == d->ht[0].size)
+    {
         return DICT_ERR;
+    }
 
     /* Allocate the new hash table and initialize all pointers to NULL */
     n.size = realsize;
@@ -171,8 +170,7 @@ int dictExpand(dict *d, unsigned long size)
     n.table = zcalloc(realsize * sizeof(dictEntry *));
     n.used = 0;
 
-    /* Is this the first initialization? If so it's not really a rehashing
-     * we just set the first hash table so that it can accept keys. */
+    // 应该是第一次初始化
     if (d->ht[0].table == NULL)
     {
         d->ht[0] = n;
@@ -196,31 +194,35 @@ int dictExpand(dict *d, unsigned long size)
  * work it does would be unbound and the function may block for a long time. */
 int dictRehash(dict *d, int n)
 {
-    int empty_visits = n * 10; /* Max number of empty buckets to visit. */
+    int empty_visits = n * 10;
     if (!dictIsRehashing(d))
+    {
         return 0;
+    }
 
     while (n-- && d->ht[0].used != 0)
     {
         dictEntry *de, *nextde;
 
-        /* Note that rehashidx can't overflow as we are sure there are more
-         * elements because ht[0].used != 0 */
         assert(d->ht[0].size > (unsigned long)d->rehashidx);
+        // 过滤buket为空的
         while (d->ht[0].table[d->rehashidx] == NULL)
         {
             d->rehashidx++;
+            // 避免空bucket太多，影响主线程
             if (--empty_visits == 0)
+            {
                 return 1;
+            }
         }
         de = d->ht[0].table[d->rehashidx];
-        /* Move all the keys in this bucket from the old to the new hash HT */
+        // 迁移该bucket的所有键值
         while (de)
         {
             uint64_t h;
 
             nextde = de->next;
-            /* Get the index in the new hash table */
+            // 根据扩容后的哈希表ht[1]大小，计算当前哈希项在扩容后哈希表中的bucket位置
             h = dictHashKey(d, de->key) & d->ht[1].sizemask;
             de->next = d->ht[1].table[h];
             d->ht[1].table[h] = de;
@@ -232,7 +234,7 @@ int dictRehash(dict *d, int n)
         d->rehashidx++;
     }
 
-    /* Check if we already rehashed the whole table... */
+    // rehash完成
     if (d->ht[0].used == 0)
     {
         zfree(d->ht[0].table);
@@ -242,7 +244,7 @@ int dictRehash(dict *d, int n)
         return 0;
     }
 
-    /* More to rehash... */
+    // rehash未完成，下次继续
     return 1;
 }
 
@@ -321,12 +323,15 @@ dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing)
     dictht *ht;
 
     if (dictIsRehashing(d))
+    {
         _dictRehashStep(d);
+    }
 
-    /* Get the index of the new element, or -1 if
-     * the element already exists. */
+    // 获取新元素索引，-1表示已存在
     if ((index = _dictKeyIndex(d, key, dictHashKey(d, key), existing)) == -1)
+    {
         return NULL;
+    }
 
     /* Allocate the memory and store the new entry.
      * Insert the element in top, with the assumption that in a database
@@ -338,7 +343,6 @@ dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing)
     ht->table[index] = entry;
     ht->used++;
 
-    /* Set the hash entry fields. */
     dictSetKey(d, entry, key);
     return entry;
 }
@@ -1059,7 +1063,7 @@ static int _dictExpandIfNeeded(dict *d)
     return DICT_OK;
 }
 
-/* Our hash table capability is a power of two */
+// 2倍现有空间扩容，大小不能超过LONG_MAX
 static unsigned long _dictNextPower(unsigned long size)
 {
     unsigned long i = DICT_HT_INITIAL_SIZE;
@@ -1086,11 +1090,15 @@ static long _dictKeyIndex(dict *d, const void *key, uint64_t hash, dictEntry **e
     unsigned long idx, table;
     dictEntry *he;
     if (existing)
+    {
         *existing = NULL;
+    }
 
     /* Expand the hash table if needed */
     if (_dictExpandIfNeeded(d) == DICT_ERR)
+    {
         return -1;
+    }
     for (table = 0; table <= 1; table++)
     {
         idx = hash & d->ht[table].sizemask;
@@ -1101,13 +1109,17 @@ static long _dictKeyIndex(dict *d, const void *key, uint64_t hash, dictEntry **e
             if (key == he->key || dictCompareKeys(d, key, he->key))
             {
                 if (existing)
+                {
                     *existing = he;
+                }
                 return -1;
             }
             he = he->next;
         }
         if (!dictIsRehashing(d))
+        {
             break;
+        }
     }
     return idx;
 }

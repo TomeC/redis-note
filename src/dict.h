@@ -82,8 +82,8 @@ typedef struct dict
     dictType *type;
     void *privdata;
     dictht ht[2];
-    long rehashidx;          /* rehashing not in progress if rehashidx == -1 */
-    unsigned long iterators; /* number of iterators currently running */
+    long rehashidx;          // 当前 rehash 在对哪个 bucket 做数据迁移，-1没有在迁移
+    unsigned long iterators; // 当前迭代器数量
 } dict;
 
 /* If safe is set to 1 this is a safe iterator, that means, you can call
@@ -166,8 +166,9 @@ typedef void(dictScanBucketFunction)(void *privdata, dictEntry **bucketref);
 
 /* API */
 dict *dictCreate(dictType *type, void *privDataPtr);
-int dictExpand(dict *d, unsigned long size);
 int dictAdd(dict *d, void *key, void *val);
+int dictExpand(dict *d, unsigned long size);
+
 dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing);
 dictEntry *dictAddOrFind(dict *d, void *key);
 int dictReplace(dict *d, void *key, void *val);
