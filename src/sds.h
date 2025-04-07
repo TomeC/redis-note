@@ -116,7 +116,7 @@ static inline size_t sdsavail(const sds s)
     {
     case SDS_TYPE_5:
     {
-        return SDS_TYPE_5_ALLOC - SDS_TYPE_5_LEN(flags);
+        return 0; // SDS_TYPE_5_ALLOC - SDS_TYPE_5_LEN(flags)
     }
     case SDS_TYPE_8:
     {

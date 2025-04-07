@@ -1490,7 +1490,7 @@ int sdsTest(void)
             sdsfree(x);
             sdsfree(y);
             x = sdsnew("0");
-            test_cond("sdsnew() free/len buffers", sdslen(x) == 1 && sdsavail(x) == 30);
+            test_cond("sdsnew() free/len buffers", sdslen(x) == 1 && sdsavail(x) == 0);
 
             /* Run the test a few times in order to hit the first two
              * SDS header types. */
