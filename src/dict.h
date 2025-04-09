@@ -41,7 +41,7 @@
 #define DICT_OK 0
 #define DICT_ERR 1
 
-/* Unused arguments generate annoying warnings... */
+// 未使用变量避免告警
 #define DICT_NOTUSED(V) ((void)V)
 
 typedef struct dictEntry
@@ -73,7 +73,7 @@ typedef struct dictht
 {
     dictEntry **table;
     unsigned long size;
-    unsigned long sizemask;
+    unsigned long sizemask; // 0x...FF
     unsigned long used;
 } dictht;
 
@@ -165,38 +165,72 @@ typedef void(dictScanBucketFunction)(void *privdata, dictEntry **bucketref);
 #define dictIsRehashing(d) ((d)->rehashidx != -1)
 
 /* API */
+// 创建一个新的hash表
 dict *dictCreate(dictType *type, void *privDataPtr);
+// 添加一个元素到hash表，返回DICT_OK或DICT_ERR
 int dictAdd(dict *d, void *key, void *val);
+// 创建或扩容hash
 int dictExpand(dict *d, unsigned long size);
-
+// 底层接口：查询key，如果不存在就插入
+// 如果key已存在返回null并赋值existing，不存在则返回赋值key但value为空的dictEntry对象
 dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing);
+// 查询key，如果不存在就插入
+// 返回赋值key但value为空的dictEntry对象
 dictEntry *dictAddOrFind(dict *d, void *key);
+// 插入或覆盖：key不存在就插入并返回0，存在就设置新value释放旧value并返回1
 int dictReplace(dict *d, void *key, void *val);
+// 删除元素，成功返回DICT_OK，key不存在返回 DICT_ERR
 int dictDelete(dict *d, const void *key);
+// 从table中移除元素，但不释放。如果找到key对应的entry在使用完后需要调用dictFreeUnlinkedEntry()释放资源，没找到返回null
 dictEntry *dictUnlink(dict *ht, const void *key);
+// 释放 dictUnlink() 返回的entry
 void dictFreeUnlinkedEntry(dict *d, dictEntry *he);
+// 释放hash
 void dictRelease(dict *d);
+// 查找key对应的entry，不存在返回null
 dictEntry *dictFind(dict *d, const void *key);
+// 查找key对应的value，不存在返回null
 void *dictFetchValue(dict *d, const void *key);
+// table缩容到能包括所有元素的最小大小，最小是4
 int dictResize(dict *d);
+// 获取迭代器
 dictIterator *dictGetIterator(dict *d);
+// 获取安全迭代器，允许在迭代过程中对字典进行修改
 dictIterator *dictGetSafeIterator(dict *d);
+// 获取下一个迭代器，结束返回NULL
 dictEntry *dictNext(dictIterator *iter);
+// 释放迭代器
 void dictReleaseIterator(dictIterator *iter);
+// 获取随机的entry，用在随机算法里
 dictEntry *dictGetRandomKey(dict *d);
+// todo 从字典中随机获取一定数量的键，避免全表扫描【？？不是很明白】
 unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count);
+// dict统计 debug使用
 void dictGetStats(char *buf, size_t bufsize, dict *d);
-uint64_t dictGenHashFunction(const void *key, int len);
-uint64_t dictGenCaseHashFunction(const unsigned char *buf, int len);
-void dictEmpty(dict *d, void(callback)(void *));
-void dictEnableResize(void);
-void dictDisableResize(void);
-int dictRehash(dict *d, int n);
-int dictRehashMilliseconds(dict *d, int ms);
+// 设置hash seed
 void dictSetHashFunctionSeed(uint8_t *seed);
+// 获取hash seed
 uint8_t *dictGetHashFunctionSeed(void);
+// 计算key的hash值
+uint64_t dictGenHashFunction(const void *key, int len);
+// 计算字符串的hash值【不区分大小写】
+uint64_t dictGenCaseHashFunction(const unsigned char *buf, int len);
+// 清空 dict
+void dictEmpty(dict *d, void(callback)(void *));
+// 设置允许resize标识
+void dictEnableResize(void);
+// 设置禁止resize标识
+void dictDisableResize(void);
+// 执行N步rehash。如果仍然rehash未完成，则返回1，否则返回0。
+// 在迁移N个bucket的时候，最多检查N*10个空bucket，避免影响主线程业务
+int dictRehash(dict *d, int n);
+// 指定时间内进行rehash
+int dictRehashMilliseconds(dict *d, int ms);
+
 unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, dictScanBucketFunction *bucketfn, void *privdata);
+// 获取key对应的hash值
 uint64_t dictGetHash(dict *d, const void *key);
+// 通过key指针和哈希值来高效查找
 dictEntry **dictFindEntryRefByPtrAndHash(dict *d, const void *oldptr, uint64_t hash);
 
 /* Hash table types */
