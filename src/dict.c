@@ -1079,7 +1079,7 @@ uint64_t dictGetHash(dict *d, const void *key)
 
 dictEntry **dictFindEntryRefByPtrAndHash(dict *d, const void *oldptr, uint64_t hash)
 {
-    dictEntry *he;
+    dictEntry *he, **heref;
     unsigned long hkey, table;
 
     if (dictSize(d) == 0)
@@ -1089,14 +1089,15 @@ dictEntry **dictFindEntryRefByPtrAndHash(dict *d, const void *oldptr, uint64_t h
     for (table = 0; table <= 1; table++)
     {
         hkey = hash & d->ht[table].sizemask;
-        he = &d->ht[table].table[hkey];
+        heref = &d->ht[table].table[hkey];
+        he = *heref;
         while (he)
         {
             if (oldptr == he->key)
             {
-                return &he;
+                return heref;
             }
-            he = &he->next;
+            he = he->next;
         }
         if (!dictIsRehashing(d))
         {

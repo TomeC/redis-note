@@ -15,8 +15,8 @@
 #define REDISMODULE_APIVER_1 1
 
 /* API flags and constants */
-#define REDISMODULE_READ (1<<0)
-#define REDISMODULE_WRITE (1<<1)
+#define REDISMODULE_READ (1 << 0)
+#define REDISMODULE_WRITE (1 << 1)
 
 #define REDISMODULE_LIST_HEAD 0
 #define REDISMODULE_LIST_TAIL 1
@@ -45,107 +45,106 @@
 #define REDISMODULE_NO_EXPIRE -1
 
 /* Sorted set API flags. */
-#define REDISMODULE_ZADD_XX      (1<<0)
-#define REDISMODULE_ZADD_NX      (1<<1)
-#define REDISMODULE_ZADD_ADDED   (1<<2)
-#define REDISMODULE_ZADD_UPDATED (1<<3)
-#define REDISMODULE_ZADD_NOP     (1<<4)
+#define REDISMODULE_ZADD_XX (1 << 0)
+#define REDISMODULE_ZADD_NX (1 << 1)
+#define REDISMODULE_ZADD_ADDED (1 << 2)
+#define REDISMODULE_ZADD_UPDATED (1 << 3)
+#define REDISMODULE_ZADD_NOP (1 << 4)
 
 /* Hash API flags. */
-#define REDISMODULE_HASH_NONE       0
-#define REDISMODULE_HASH_NX         (1<<0)
-#define REDISMODULE_HASH_XX         (1<<1)
-#define REDISMODULE_HASH_CFIELDS    (1<<2)
-#define REDISMODULE_HASH_EXISTS     (1<<3)
+#define REDISMODULE_HASH_NONE 0
+#define REDISMODULE_HASH_NX (1 << 0)
+#define REDISMODULE_HASH_XX (1 << 1)
+#define REDISMODULE_HASH_CFIELDS (1 << 2)
+#define REDISMODULE_HASH_EXISTS (1 << 3)
 
 /* Context Flags: Info about the current context returned by
  * RM_GetContextFlags(). */
 
 /* The command is running in the context of a Lua script */
-#define REDISMODULE_CTX_FLAGS_LUA (1<<0)
+#define REDISMODULE_CTX_FLAGS_LUA (1 << 0)
 /* The command is running inside a Redis transaction */
-#define REDISMODULE_CTX_FLAGS_MULTI (1<<1)
+#define REDISMODULE_CTX_FLAGS_MULTI (1 << 1)
 /* The instance is a master */
-#define REDISMODULE_CTX_FLAGS_MASTER (1<<2)
+#define REDISMODULE_CTX_FLAGS_MASTER (1 << 2)
 /* The instance is a slave */
-#define REDISMODULE_CTX_FLAGS_SLAVE (1<<3)
+#define REDISMODULE_CTX_FLAGS_SLAVE (1 << 3)
 /* The instance is read-only (usually meaning it's a slave as well) */
-#define REDISMODULE_CTX_FLAGS_READONLY (1<<4)
+#define REDISMODULE_CTX_FLAGS_READONLY (1 << 4)
 /* The instance is running in cluster mode */
-#define REDISMODULE_CTX_FLAGS_CLUSTER (1<<5)
+#define REDISMODULE_CTX_FLAGS_CLUSTER (1 << 5)
 /* The instance has AOF enabled */
-#define REDISMODULE_CTX_FLAGS_AOF (1<<6)
+#define REDISMODULE_CTX_FLAGS_AOF (1 << 6)
 /* The instance has RDB enabled */
-#define REDISMODULE_CTX_FLAGS_RDB (1<<7)
+#define REDISMODULE_CTX_FLAGS_RDB (1 << 7)
 /* The instance has Maxmemory set */
-#define REDISMODULE_CTX_FLAGS_MAXMEMORY (1<<8)
+#define REDISMODULE_CTX_FLAGS_MAXMEMORY (1 << 8)
 /* Maxmemory is set and has an eviction policy that may delete keys */
-#define REDISMODULE_CTX_FLAGS_EVICT (1<<9)
+#define REDISMODULE_CTX_FLAGS_EVICT (1 << 9)
 /* Redis is out of memory according to the maxmemory flag. */
-#define REDISMODULE_CTX_FLAGS_OOM (1<<10)
+#define REDISMODULE_CTX_FLAGS_OOM (1 << 10)
 /* Less than 25% of memory available according to maxmemory. */
-#define REDISMODULE_CTX_FLAGS_OOM_WARNING (1<<11)
+#define REDISMODULE_CTX_FLAGS_OOM_WARNING (1 << 11)
 /* The command was sent over the replication link. */
-#define REDISMODULE_CTX_FLAGS_REPLICATED (1<<12)
+#define REDISMODULE_CTX_FLAGS_REPLICATED (1 << 12)
 /* Redis is currently loading either from AOF or RDB. */
-#define REDISMODULE_CTX_FLAGS_LOADING (1<<13)
+#define REDISMODULE_CTX_FLAGS_LOADING (1 << 13)
 /* The replica has no link with its master, note that
  * there is the inverse flag as well:
  *
  *  REDISMODULE_CTX_FLAGS_REPLICA_IS_ONLINE
  *
  * The two flags are exclusive, one or the other can be set. */
-#define REDISMODULE_CTX_FLAGS_REPLICA_IS_STALE (1<<14)
+#define REDISMODULE_CTX_FLAGS_REPLICA_IS_STALE (1 << 14)
 /* The replica is trying to connect with the master.
  * (REPL_STATE_CONNECT and REPL_STATE_CONNECTING states) */
-#define REDISMODULE_CTX_FLAGS_REPLICA_IS_CONNECTING (1<<15)
+#define REDISMODULE_CTX_FLAGS_REPLICA_IS_CONNECTING (1 << 15)
 /* THe replica is receiving an RDB file from its master. */
-#define REDISMODULE_CTX_FLAGS_REPLICA_IS_TRANSFERRING (1<<16)
+#define REDISMODULE_CTX_FLAGS_REPLICA_IS_TRANSFERRING (1 << 16)
 /* The replica is online, receiving updates from its master. */
-#define REDISMODULE_CTX_FLAGS_REPLICA_IS_ONLINE (1<<17)
+#define REDISMODULE_CTX_FLAGS_REPLICA_IS_ONLINE (1 << 17)
 /* There is currently some background process active. */
-#define REDISMODULE_CTX_FLAGS_ACTIVE_CHILD (1<<18)
+#define REDISMODULE_CTX_FLAGS_ACTIVE_CHILD (1 << 18)
 
-#define REDISMODULE_NOTIFY_GENERIC (1<<2)     /* g */
-#define REDISMODULE_NOTIFY_STRING (1<<3)      /* $ */
-#define REDISMODULE_NOTIFY_LIST (1<<4)        /* l */
-#define REDISMODULE_NOTIFY_SET (1<<5)         /* s */
-#define REDISMODULE_NOTIFY_HASH (1<<6)        /* h */
-#define REDISMODULE_NOTIFY_ZSET (1<<7)        /* z */
-#define REDISMODULE_NOTIFY_EXPIRED (1<<8)     /* x */
-#define REDISMODULE_NOTIFY_EVICTED (1<<9)     /* e */
-#define REDISMODULE_NOTIFY_STREAM (1<<10)     /* t */
-#define REDISMODULE_NOTIFY_ALL (REDISMODULE_NOTIFY_GENERIC | REDISMODULE_NOTIFY_STRING | REDISMODULE_NOTIFY_LIST | REDISMODULE_NOTIFY_SET | REDISMODULE_NOTIFY_HASH | REDISMODULE_NOTIFY_ZSET | REDISMODULE_NOTIFY_EXPIRED | REDISMODULE_NOTIFY_EVICTED | REDISMODULE_NOTIFY_STREAM)      /* A */
-
+#define REDISMODULE_NOTIFY_GENERIC (1 << 2)                                                                                                                                                                                                                                          /* g */
+#define REDISMODULE_NOTIFY_STRING (1 << 3)                                                                                                                                                                                                                                           /* $ */
+#define REDISMODULE_NOTIFY_LIST (1 << 4)                                                                                                                                                                                                                                             /* l */
+#define REDISMODULE_NOTIFY_SET (1 << 5)                                                                                                                                                                                                                                              /* s */
+#define REDISMODULE_NOTIFY_HASH (1 << 6)                                                                                                                                                                                                                                             /* h */
+#define REDISMODULE_NOTIFY_ZSET (1 << 7)                                                                                                                                                                                                                                             /* z */
+#define REDISMODULE_NOTIFY_EXPIRED (1 << 8)                                                                                                                                                                                                                                          /* x */
+#define REDISMODULE_NOTIFY_EVICTED (1 << 9)                                                                                                                                                                                                                                          /* e */
+#define REDISMODULE_NOTIFY_STREAM (1 << 10)                                                                                                                                                                                                                                          /* t */
+#define REDISMODULE_NOTIFY_ALL (REDISMODULE_NOTIFY_GENERIC | REDISMODULE_NOTIFY_STRING | REDISMODULE_NOTIFY_LIST | REDISMODULE_NOTIFY_SET | REDISMODULE_NOTIFY_HASH | REDISMODULE_NOTIFY_ZSET | REDISMODULE_NOTIFY_EXPIRED | REDISMODULE_NOTIFY_EVICTED | REDISMODULE_NOTIFY_STREAM) /* A */
 
 /* A special pointer that we can use between the core and the module to signal
  * field deletion, and that is impossible to be a valid pointer. */
-#define REDISMODULE_HASH_DELETE ((RedisModuleString*)(long)1)
+#define REDISMODULE_HASH_DELETE ((RedisModuleString *)(long)1)
 
 /* Error messages. */
 #define REDISMODULE_ERRORMSG_WRONGTYPE "WRONGTYPE Operation against a key holding the wrong kind of value"
 
-#define REDISMODULE_POSITIVE_INFINITE (1.0/0.0)
-#define REDISMODULE_NEGATIVE_INFINITE (-1.0/0.0)
+#define REDISMODULE_POSITIVE_INFINITE (1.0 / 0.0)
+#define REDISMODULE_NEGATIVE_INFINITE (-1.0 / 0.0)
 
 /* Cluster API defines. */
 #define REDISMODULE_NODE_ID_LEN 40
-#define REDISMODULE_NODE_MYSELF     (1<<0)
-#define REDISMODULE_NODE_MASTER     (1<<1)
-#define REDISMODULE_NODE_SLAVE      (1<<2)
-#define REDISMODULE_NODE_PFAIL      (1<<3)
-#define REDISMODULE_NODE_FAIL       (1<<4)
-#define REDISMODULE_NODE_NOFAILOVER (1<<5)
+#define REDISMODULE_NODE_MYSELF (1 << 0)
+#define REDISMODULE_NODE_MASTER (1 << 1)
+#define REDISMODULE_NODE_SLAVE (1 << 2)
+#define REDISMODULE_NODE_PFAIL (1 << 3)
+#define REDISMODULE_NODE_FAIL (1 << 4)
+#define REDISMODULE_NODE_NOFAILOVER (1 << 5)
 
 #define REDISMODULE_CLUSTER_FLAG_NONE 0
-#define REDISMODULE_CLUSTER_FLAG_NO_FAILOVER (1<<1)
-#define REDISMODULE_CLUSTER_FLAG_NO_REDIRECTION (1<<2)
+#define REDISMODULE_CLUSTER_FLAG_NO_FAILOVER (1 << 1)
+#define REDISMODULE_CLUSTER_FLAG_NO_REDIRECTION (1 << 2)
 
-#define REDISMODULE_NOT_USED(V) ((void) V)
+#define REDISMODULE_NOT_USED(V) ((void)V)
 
 /* Bit flags for aux_save_triggers and the aux_load and aux_save callbacks */
-#define REDISMODULE_AUX_BEFORE_RDB (1<<0)
-#define REDISMODULE_AUX_AFTER_RDB (1<<1)
+// #define REDISMODULE_AUX_BEFORE_RDB (1<<0)
+// #define REDISMODULE_AUX_AFTER_RDB (1<<1)
 
 /* This type represents a timer handle, and is returned when a timer is
  * registered and used in order to invalidate a timer. It's just a 64 bit
@@ -156,7 +155,7 @@ typedef uint64_t RedisModuleTimerID;
 /* CommandFilter Flags */
 
 /* Do filter RedisModule_Call() commands initiated by module itself. */
-#define REDISMODULE_CMDFILTER_NOSELF    (1<<0)
+#define REDISMODULE_CMDFILTER_NOSELF (1 << 0)
 
 /* ------------------------- End of common defines ------------------------ */
 
@@ -192,10 +191,11 @@ typedef void (*RedisModuleTypeDigestFunc)(RedisModuleDigest *digest, void *value
 typedef void (*RedisModuleTypeFreeFunc)(void *value);
 typedef void (*RedisModuleClusterMessageReceiver)(RedisModuleCtx *ctx, const char *sender_id, uint8_t type, const unsigned char *payload, uint32_t len);
 typedef void (*RedisModuleTimerProc)(RedisModuleCtx *ctx, void *data);
-typedef void (*RedisModuleCommandFilterFunc) (RedisModuleCommandFilterCtx *filter);
+typedef void (*RedisModuleCommandFilterFunc)(RedisModuleCommandFilterCtx *filter);
 
 #define REDISMODULE_TYPE_METHOD_VERSION 2
-typedef struct RedisModuleTypeMethods {
+typedef struct RedisModuleTypeMethods
+{
     uint64_t version;
     RedisModuleTypeLoadFunc rdb_load;
     RedisModuleTypeSaveFunc rdb_save;
@@ -209,10 +209,9 @@ typedef struct RedisModuleTypeMethods {
 } RedisModuleTypeMethods;
 
 #define REDISMODULE_GET_API(name) \
-    RedisModule_GetApi("RedisModule_" #name, ((void **)&RedisModule_ ## name))
+    RedisModule_GetApi("RedisModule_" #name, ((void **)&RedisModule_##name))
 
 #define REDISMODULE_API_FUNC(x) (*x)
-
 
 void *REDISMODULE_API_FUNC(RedisModule_Alloc)(size_t bytes);
 void *REDISMODULE_API_FUNC(RedisModule_Realloc)(void *ptr, size_t bytes);
@@ -344,7 +343,7 @@ int REDISMODULE_API_FUNC(RedisModule_DictCompare)(RedisModuleDictIter *di, const
 /* Experimental APIs */
 #ifdef REDISMODULE_EXPERIMENTAL_API
 #define REDISMODULE_EXPERIMENTAL_API_VERSION 3
-RedisModuleBlockedClient *REDISMODULE_API_FUNC(RedisModule_BlockClient)(RedisModuleCtx *ctx, RedisModuleCmdFunc reply_callback, RedisModuleCmdFunc timeout_callback, void (*free_privdata)(RedisModuleCtx*,void*), long long timeout_ms);
+RedisModuleBlockedClient *REDISMODULE_API_FUNC(RedisModule_BlockClient)(RedisModuleCtx *ctx, RedisModuleCmdFunc reply_callback, RedisModuleCmdFunc timeout_callback, void (*free_privdata)(RedisModuleCtx *, void *), long long timeout_ms);
 int REDISMODULE_API_FUNC(RedisModule_UnblockClient)(RedisModuleBlockedClient *bc, void *privdata);
 int REDISMODULE_API_FUNC(RedisModule_IsBlockedReplyRequest)(RedisModuleCtx *ctx);
 int REDISMODULE_API_FUNC(RedisModule_IsBlockedTimeoutRequest)(RedisModuleCtx *ctx);
@@ -384,9 +383,10 @@ int REDISMODULE_API_FUNC(RedisModule_CommandFilterArgDelete)(RedisModuleCommandF
 
 /* This is included inline inside each Redis module. */
 static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) __attribute__((unused));
-static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) {
-    void *getapifuncptr = ((void**)ctx)[0];
-    RedisModule_GetApi = (int (*)(const char *, void *)) (unsigned long)getapifuncptr;
+static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver)
+{
+    void *getapifuncptr = ((void **)ctx)[0];
+    RedisModule_GetApi = (int (*)(const char *, void *))(unsigned long)getapifuncptr;
     REDISMODULE_GET_API(Alloc);
     REDISMODULE_GET_API(Calloc);
     REDISMODULE_GET_API(Free);
@@ -553,8 +553,9 @@ static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int 
     REDISMODULE_GET_API(CommandFilterArgDelete);
 #endif
 
-    if (RedisModule_IsModuleNameBusy && RedisModule_IsModuleNameBusy(name)) return REDISMODULE_ERR;
-    RedisModule_SetModuleAttribs(ctx,name,ver,apiver);
+    if (RedisModule_IsModuleNameBusy && RedisModule_IsModuleNameBusy(name))
+        return REDISMODULE_ERR;
+    RedisModule_SetModuleAttribs(ctx, name, ver, apiver);
     return REDISMODULE_OK;
 }
 
