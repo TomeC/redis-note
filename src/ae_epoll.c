@@ -61,7 +61,7 @@ static int aeApiCreate(aeEventLoop *eventLoop)
     eventLoop->apidata = state;
     return 0;
 }
-
+// 重新设置事件的大小
 static int aeApiResize(aeEventLoop *eventLoop, int setsize)
 {
     aeApiState *state = eventLoop->apidata;
@@ -69,7 +69,7 @@ static int aeApiResize(aeEventLoop *eventLoop, int setsize)
     state->events = zrealloc(state->events, sizeof(struct epoll_event) * setsize);
     return 0;
 }
-
+// 关闭连接
 static void aeApiFree(aeEventLoop *eventLoop)
 {
     aeApiState *state = eventLoop->apidata;
