@@ -97,8 +97,8 @@ typedef struct aeEventLoop
     int setsize; // 能监听的最大文件fd数量 server.maxclients + CONFIG_FDSET_INCR
     long long timeEventNextId;
     time_t lastTime;            /* Used to detect system clock skew */
-    aeFileEvent *events;        /* Registered events */
-    aeFiredEvent *fired;        /* Fired events */
+    aeFileEvent *events;        // 注册事件
+    aeFiredEvent *fired;        // 被触发的事件
     aeTimeEvent *timeEventHead; // 记录时间事件的链表
     int stop;
     void *apidata;                  // epoll的aeApiState
@@ -106,12 +106,17 @@ typedef struct aeEventLoop
     aeBeforeSleepProc *aftersleep;  // service.c 里的 afterSleep
 } aeEventLoop;
 
-/* Prototypes */
+// 接口
+// main函数中初始化事件循环，setsize默认1128，初始化并调用epoll_create
 aeEventLoop *aeCreateEventLoop(int setsize);
+// 然后调用server.c:listenToPort
+// 事件注册函数
+int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileProc *proc, void *clientData);
+// 释放事件循环资源
 void aeDeleteEventLoop(aeEventLoop *eventLoop);
+// 停止事件循环
 void aeStop(aeEventLoop *eventLoop);
-int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
-                      aeFileProc *proc, void *clientData);
+
 void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask);
 int aeGetFileEvents(aeEventLoop *eventLoop, int fd);
 long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds,

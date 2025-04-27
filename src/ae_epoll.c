@@ -35,7 +35,7 @@ typedef struct aeApiState
     int epfd;
     struct epoll_event *events;
 } aeApiState;
-
+// 调用epoll_create并保存返回值
 static int aeApiCreate(aeEventLoop *eventLoop)
 {
     aeApiState *state = zmalloc(sizeof(aeApiState));
@@ -50,7 +50,8 @@ static int aeApiCreate(aeEventLoop *eventLoop)
         zfree(state);
         return -1;
     }
-    state->epfd = epoll_create(1024); /* 1024 is just a hint for the kernel */
+    // 1024 只是一个对内核的提示
+    state->epfd = epoll_create(1024);
     if (state->epfd == -1)
     {
         zfree(state->events);
@@ -111,9 +112,13 @@ static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int delmask)
 
     ee.events = 0;
     if (mask & AE_READABLE)
+    {
         ee.events |= EPOLLIN;
+    }
     if (mask & AE_WRITABLE)
+    {
         ee.events |= EPOLLOUT;
+    }
     ee.data.fd = fd;
     if (mask != AE_NONE)
     {

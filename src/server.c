@@ -2089,41 +2089,22 @@ void checkTcpBacklogSettings(void)
 #endif
 }
 
-/* Initialize a set of file descriptors to listen to the specified 'port'
- * binding the addresses specified in the Redis server configuration.
- *
- * The listening file descriptors are stored in the integer array 'fds'
- * and their number is set in '*count'.
- *
- * The addresses to bind are specified in the global server.bindaddr array
- * and their number is server.bindaddr_count. If the server configuration
- * contains no specific addresses to bind, this function will try to
- * bind * (all addresses) for both the IPv4 and IPv6 protocols.
- *
- * On success the function returns C_OK.
- *
- * On error the function returns C_ERR. For the function to be on
- * error, at least one of the server.bindaddr addresses was
- * impossible to bind, or no bind addresses were specified in the server
- * configuration but the function is not able to bind * for at least
- * one of the IPv4 or IPv6 protocols. */
+// 绑定端口，count是ipfd_count初始化时是0
 int listenToPort(int port, int *fds, int *count)
 {
     int j;
 
-    /* Force binding of 0.0.0.0 if no bind address is specified, always
-     * entering the loop if j == 0. */
+    // 未指定ip就绑定 0.0.0.0 j == 0时执行
     if (server.bindaddr_count == 0)
+    {
         server.bindaddr[0] = NULL;
+    }
     for (j = 0; j < server.bindaddr_count || j == 0; j++)
     {
         if (server.bindaddr[j] == NULL)
         {
             int unsupported = 0;
-            /* Bind * for both IPv6 and IPv4, we enter here only if
-             * server.bindaddr_count == 0. */
-            fds[*count] = anetTcp6Server(server.neterr, port, NULL,
-                                         server.tcp_backlog);
+            fds[*count] = anetTcp6Server(server.neterr, port, NULL, server.tcp_backlog);
             if (fds[*count] != ANET_ERR)
             {
                 anetNonBlock(NULL, fds[*count]);
@@ -2137,7 +2118,6 @@ int listenToPort(int port, int *fds, int *count)
 
             if (*count == 1 || unsupported)
             {
-                /* Bind the IPv4 address as well. */
                 fds[*count] = anetTcpServer(server.neterr, port, NULL,
                                             server.tcp_backlog);
                 if (fds[*count] != ANET_ERR)
@@ -2151,21 +2131,21 @@ int listenToPort(int port, int *fds, int *count)
                     serverLog(LL_WARNING, "Not listening to IPv4: unsupproted");
                 }
             }
-            /* Exit the loop if we were able to bind * on IPv4 and IPv6,
-             * otherwise fds[*count] will be ANET_ERR and we'll print an
-             * error and return to the caller with an error. */
+            // 绑定成功后退出
             if (*count + unsupported == 2)
+            {
                 break;
+            }
         }
         else if (strchr(server.bindaddr[j], ':'))
         {
-            /* Bind IPv6 address. */
+            // 绑定ipv6
             fds[*count] = anetTcp6Server(server.neterr, port, server.bindaddr[j],
                                          server.tcp_backlog);
         }
         else
         {
-            /* Bind IPv4 address. */
+            // 绑定ipv4
             fds[*count] = anetTcpServer(server.neterr, port, server.bindaddr[j],
                                         server.tcp_backlog);
         }
@@ -2178,9 +2158,12 @@ int listenToPort(int port, int *fds, int *count)
             if (errno == ENOPROTOOPT || errno == EPROTONOSUPPORT ||
                 errno == ESOCKTNOSUPPORT || errno == EPFNOSUPPORT ||
                 errno == EAFNOSUPPORT || errno == EADDRNOTAVAIL)
+            {
                 continue;
+            }
             return C_ERR;
         }
+        // 设置非阻塞标识
         anetNonBlock(NULL, fds[*count]);
         (*count)++;
     }
@@ -2260,7 +2243,7 @@ void initServer(void)
 
     createSharedObjects();
     adjustOpenFilesLimit();
-    // 创建事件循环
+    // 创建事件循环 epoll_create
     server.el = aeCreateEventLoop(server.maxclients + CONFIG_FDSET_INCR); // 1000+32+96
     if (server.el == NULL)
     {
@@ -2271,10 +2254,11 @@ void initServer(void)
     }
     server.db = zmalloc(sizeof(redisDb) * server.dbnum);
 
-    /* Open the TCP listening socket for the user commands. */
-    if (server.port != 0 &&
-        listenToPort(server.port, server.ipfd, &server.ipfd_count) == C_ERR)
+    // 初始化socket() bind() listen()
+    if (server.port != 0 && listenToPort(server.port, server.ipfd, &server.ipfd_count) == C_ERR)
+    {
         exit(1);
+    }
 
     /* Open the listening Unix domain socket. */
     if (server.unixsocket != NULL)
@@ -2290,14 +2274,13 @@ void initServer(void)
         anetNonBlock(NULL, server.sofd);
     }
 
-    /* Abort if there are no listening sockets at all. */
+    // 没监听任何端口直接返回
     if (server.ipfd_count == 0 && server.sofd < 0)
     {
         serverLog(LL_WARNING, "Configured to not listen anywhere, exiting.");
         exit(1);
     }
 
-    /* Create the Redis databases, and initialize other internal state. */
     for (j = 0; j < server.dbnum; j++)
     {
         server.db[j].dict = dictCreate(&dbDictType, NULL);
@@ -2345,10 +2328,7 @@ void initServer(void)
     server.aof_last_write_errno = 0;
     server.repl_good_slaves_count = 0;
 
-    /* Create the timer callback, this is our way to process many background
-     * operations incrementally, like clients timeout, eviction of unaccessed
-     * expired keys and so forth.
-     * 创建定时事件 1ms 触发一次 */
+    // 创建定时事件 1ms后触发一次，默认100ms执行一次
     if (aeCreateTimeEvent(server.el, 1, serverCron, NULL, NULL) == AE_ERR)
     {
         serverPanic("Can't create event loop timers.");
@@ -2358,36 +2338,31 @@ void initServer(void)
     // 新客户端连接处理函数 acceptTcpHandler 处理函数
     for (j = 0; j < server.ipfd_count; j++)
     {
-        if (aeCreateFileEvent(server.el, server.ipfd[j], AE_READABLE,
-                              acceptTcpHandler, NULL) == AE_ERR)
+        // epoll_ctl
+        if (aeCreateFileEvent(server.el, server.ipfd[j], AE_READABLE, acceptTcpHandler, NULL) == AE_ERR)
         {
-            serverPanic(
-                "Unrecoverable error creating server.ipfd file event.");
+            serverPanic("Unrecoverable error creating server.ipfd file event.");
         }
     }
-    if (server.sofd > 0 && aeCreateFileEvent(server.el, server.sofd, AE_READABLE,
-                                             acceptUnixHandler, NULL) == AE_ERR)
+    if (server.sofd > 0 && aeCreateFileEvent(server.el, server.sofd, AE_READABLE, acceptUnixHandler, NULL) == AE_ERR)
+    {
         serverPanic("Unrecoverable error creating server.sofd file event.");
+    }
 
     /* Register a readable event for the pipe used to awake the event loop
      * when a blocked client in a module needs attention. */
-    if (aeCreateFileEvent(server.el, server.module_blocked_pipe[0], AE_READABLE,
-                          moduleBlockedClientPipeReadable, NULL) == AE_ERR)
+    if (aeCreateFileEvent(server.el, server.module_blocked_pipe[0], AE_READABLE, moduleBlockedClientPipeReadable, NULL) == AE_ERR)
     {
-        serverPanic(
-            "Error registering the readable event for the module "
-            "blocked clients subsystem.");
+        serverPanic("Error registering the readable event for the module blocked clients subsystem.");
     }
 
     /* Open the AOF file if needed. */
     if (server.aof_state == AOF_ON)
     {
-        server.aof_fd = open(server.aof_filename,
-                             O_WRONLY | O_APPEND | O_CREAT, 0644);
+        server.aof_fd = open(server.aof_filename, O_WRONLY | O_APPEND | O_CREAT, 0644);
         if (server.aof_fd == -1)
         {
-            serverLog(LL_WARNING, "Can't open the append-only file: %s",
-                      strerror(errno));
+            serverLog(LL_WARNING, "Can't open the append-only file: %s", strerror(errno));
             exit(1);
         }
     }
