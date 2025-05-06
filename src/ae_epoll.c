@@ -29,7 +29,9 @@
  */
 
 #include <sys/epoll.h>
-
+#include <sys/time.h>
+#include "ae.h"
+// 保存epoll额外产生的数据
 typedef struct aeApiState
 {
     int epfd;
@@ -50,7 +52,7 @@ static int aeApiCreate(aeEventLoop *eventLoop)
         zfree(state);
         return -1;
     }
-    // 1024 只是一个对内核的提示
+    // 1024 只是一个对内核的建议
     state->epfd = epoll_create(1024);
     if (state->epfd == -1)
     {
@@ -78,7 +80,7 @@ static void aeApiFree(aeEventLoop *eventLoop)
     zfree(state->events);
     zfree(state);
 }
-
+// 添加事件
 static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask)
 {
     aeApiState *state = eventLoop->apidata;
@@ -87,7 +89,7 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask)
     int op = eventLoop->events[fd].mask == AE_NONE ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
 
     ee.events = 0;
-    mask |= eventLoop->events[fd].mask; /* Merge old events */
+    mask |= eventLoop->events[fd].mask;
     if (mask & AE_READABLE)
     {
         ee.events |= EPOLLIN;
@@ -103,11 +105,12 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask)
     }
     return 0;
 }
-
+// 删除epoll事件
 static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int delmask)
 {
     aeApiState *state = eventLoop->apidata;
-    struct epoll_event ee = {0}; /* avoid valgrind warning */
+    struct epoll_event ee = {0};
+    // 假如fd的mask是0001，要删除0001，那么mask=0001&(1110)就是0000
     int mask = eventLoop->events[fd].mask & (~delmask);
 
     ee.events = 0;
@@ -136,7 +139,10 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp)
 {
     aeApiState *state = eventLoop->apidata;
     int retval, numevents = 0;
-
+    // epfd：由 epoll_create 创建的 epoll 实例的文件描述符
+    // events：用于存储返回事件的数组，每个元素是一个 epoll_event 结构体。
+    // maxevents：最多返回的事件数量（不能超过初始化时分配的大小）。
+    // timeout：超时时间（单位为毫秒），若为 -1 表示无限等待，0 表示立即返回。
     retval = epoll_wait(state->epfd, state->events, eventLoop->setsize,
                         tvp ? (tvp->tv_sec * 1000 + tvp->tv_usec / 1000) : -1);
     if (retval > 0)
