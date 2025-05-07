@@ -83,14 +83,13 @@ typedef struct aeTimeEvent
     struct aeTimeEvent *next;            // 时间事件链表的后向指针
 } aeTimeEvent;
 
-/* A fired event */
+// 触发event
 typedef struct aeFiredEvent
 {
     int fd;
     int mask;
 } aeFiredEvent;
 
-/* State of an event based program */
 typedef struct aeEventLoop
 {
     int maxfd;   // 初始化为-1，监听端口返回的fd
@@ -116,20 +115,31 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileProc *proc
 void aeDeleteEventLoop(aeEventLoop *eventLoop);
 // 停止事件循环
 void aeStop(aeEventLoop *eventLoop);
-
+// 删除指定事件
 void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask);
+// 获取指定fd对应的事件
 int aeGetFileEvents(aeEventLoop *eventLoop, int fd);
+// 创建定时事件
 long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds,
                             aeTimeProc *proc, void *clientData,
                             aeEventFinalizerProc *finalizerProc);
+// 删除指定id的定时器
 int aeDeleteTimeEvent(aeEventLoop *eventLoop, long long id);
+// 循环事件处理【网络&定时】
 int aeProcessEvents(aeEventLoop *eventLoop, int flags);
+// 等待指定的事件类型发生
 int aeWait(int fd, int mask, long long milliseconds);
+// 主循环事件处理
 void aeMain(aeEventLoop *eventLoop);
+// 获取网络实现名称：epoll
 char *aeGetApiName(void);
+// 设置事件处理前执行的函数
 void aeSetBeforeSleepProc(aeEventLoop *eventLoop, aeBeforeSleepProc *beforesleep);
+// 设置epoll_wait后执行的函数
 void aeSetAfterSleepProc(aeEventLoop *eventLoop, aeBeforeSleepProc *aftersleep);
+// 获取eventLoop的事件数组大小
 int aeGetSetSize(aeEventLoop *eventLoop);
+// 重新设置事件数组大小
 int aeResizeSetSize(aeEventLoop *eventLoop, int setsize);
 
 #endif

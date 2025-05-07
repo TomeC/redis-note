@@ -776,9 +776,7 @@ static void acceptCommonHandler(int fd, int flags, char *ip)
     client *c;
     if ((c = createClient(fd)) == NULL)
     {
-        serverLog(LL_WARNING,
-                  "Error registering fd event for the new client: %s (fd=%d)",
-                  strerror(errno), fd);
+        serverLog(LL_WARNING, "Error registering fd event for the new client: %s (fd=%d)", strerror(errno), fd);
         close(fd); /* May be already closed, just ignore errors */
         return;
     }
@@ -858,8 +856,9 @@ void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask)
         if (cfd == ANET_ERR)
         {
             if (errno != EWOULDBLOCK)
-                serverLog(LL_WARNING,
-                          "Accepting client connection: %s", server.neterr);
+            {
+                serverLog(LL_WARNING, "Accepting client connection: %s", server.neterr);
+            }
             return;
         }
         serverLog(LL_VERBOSE, "Accepted %s:%d", cip, cport);

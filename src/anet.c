@@ -552,7 +552,9 @@ static int _anetTcpServer(char *err, int port, char *bindaddr, int af, int backl
 
 error:
     if (s != -1)
+    {
         close(s);
+    }
     s = ANET_ERR;
 end:
     freeaddrinfo(servinfo);

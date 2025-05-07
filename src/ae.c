@@ -111,32 +111,31 @@ int aeGetSetSize(aeEventLoop *eventLoop)
     return eventLoop->setsize;
 }
 
-/* Resize the maximum set size of the event loop.
- * If the requested set size is smaller than the current set size, but
- * there is already a file descriptor in use that is >= the requested
- * set size minus one, AE_ERR is returned and the operation is not
- * performed at all.
- *
- * Otherwise AE_OK is returned and the operation is successful. */
 int aeResizeSetSize(aeEventLoop *eventLoop, int setsize)
 {
     int i;
 
     if (setsize == eventLoop->setsize)
+    {
         return AE_OK;
+    }
     if (eventLoop->maxfd >= setsize)
+    {
         return AE_ERR;
+    }
     if (aeApiResize(eventLoop, setsize) == -1)
+    {
         return AE_ERR;
+    }
 
     eventLoop->events = zrealloc(eventLoop->events, sizeof(aeFileEvent) * setsize);
     eventLoop->fired = zrealloc(eventLoop->fired, sizeof(aeFiredEvent) * setsize);
     eventLoop->setsize = setsize;
-
-    /* Make sure that if we created new slots, they are initialized with
-     * an AE_NONE mask. */
+    // 初始化新生成的slot
     for (i = eventLoop->maxfd + 1; i < setsize; i++)
+    {
         eventLoop->events[i].mask = AE_NONE;
+    }
     return AE_OK;
 }
 
@@ -204,10 +203,10 @@ void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
 
     aeApiDelEvent(eventLoop, fd, mask);
     fe->mask = fe->mask & (~mask);
+    // 如果maxfd没在使用要重新查找一个最大的
     if (fd == eventLoop->maxfd && fe->mask == AE_NONE)
     {
         int j;
-
         for (j = eventLoop->maxfd - 1; j >= 0; j--)
         {
             if (eventLoop->events[j].mask != AE_NONE)
@@ -222,7 +221,9 @@ void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
 int aeGetFileEvents(aeEventLoop *eventLoop, int fd)
 {
     if (fd >= eventLoop->setsize)
+    {
         return 0;
+    }
     aeFileEvent *fe = &eventLoop->events[fd];
 
     return fe->mask;
@@ -291,7 +292,7 @@ int aeDeleteTimeEvent(aeEventLoop *eventLoop, long long id)
         }
         te = te->next;
     }
-    return AE_ERR; /* NO event with the specified ID found */
+    return AE_ERR;
 }
 
 // O(N) 查找最近的定时任务
@@ -531,8 +532,6 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
     return processed;
 }
 
-/* Wait for milliseconds until the given file descriptor becomes
- * writable/readable/exception */
 int aeWait(int fd, int mask, long long milliseconds)
 {
     struct pollfd pfd;
@@ -541,9 +540,13 @@ int aeWait(int fd, int mask, long long milliseconds)
     memset(&pfd, 0, sizeof(pfd));
     pfd.fd = fd;
     if (mask & AE_READABLE)
+    {
         pfd.events |= POLLIN;
+    }
     if (mask & AE_WRITABLE)
+    {
         pfd.events |= POLLOUT;
+    }
 
     if ((retval = poll(&pfd, 1, milliseconds)) == 1)
     {
