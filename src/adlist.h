@@ -33,18 +33,21 @@
 
 /* Node, List, and Iterator are the only data structures used currently. */
 
-typedef struct listNode {
+typedef struct listNode
+{
     struct listNode *prev;
     struct listNode *next;
     void *value;
 } listNode;
 
-typedef struct listIter {
+typedef struct listIter
+{
     listNode *next;
     int direction;
 } listIter;
 
-typedef struct list {
+typedef struct list
+{
     listNode *head;
     listNode *tail;
     void *(*dup)(void *ptr);
@@ -61,9 +64,9 @@ typedef struct list {
 #define listNextNode(n) ((n)->next)
 #define listNodeValue(n) ((n)->value)
 
-#define listSetDupMethod(l,m) ((l)->dup = (m))
-#define listSetFreeMethod(l,m) ((l)->free = (m))
-#define listSetMatchMethod(l,m) ((l)->match = (m))
+#define listSetDupMethod(l, m) ((l)->dup = (m))
+#define listSetFreeMethod(l, m) ((l)->free = (m))
+#define listSetMatchMethod(l, m) ((l)->match = (m))
 
 #define listGetDupMethod(l) ((l)->dup)
 #define listGetFree(l) ((l)->free)

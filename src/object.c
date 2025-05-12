@@ -437,9 +437,14 @@ void decrRefCount(robj *o)
     else
     {
         if (o->refcount <= 0)
+        {
             serverPanic("decrRefCount against refcount <= 0");
+        }
+        // 共享对象不减一
         if (o->refcount != OBJ_SHARED_REFCOUNT)
+        {
             o->refcount--;
+        }
     }
 }
 

@@ -28,15 +28,21 @@
  */
 
 /* Exported API */
+// 初始化后台线程
 void bioInit(void);
+// 添加后台执行的任务
 void bioCreateBackgroundJob(int type, void *arg1, void *arg2, void *arg3);
+// 获取指定类型的待执行任务数量
 unsigned long long bioPendingJobsOfType(int type);
+// 等待执行下一个任务后剩余的待执行任务【未使用】
 unsigned long long bioWaitStepOfType(int type);
+// 未实现
 time_t bioOlderJobOfType(int type);
+// 终止所有线程
 void bioKillThreads(void);
 
-/* Background job opcodes */
-#define BIO_CLOSE_FILE    0 /* Deferred close(2) syscall. */
-#define BIO_AOF_FSYNC     1 /* Deferred AOF fsync. */
-#define BIO_LAZY_FREE     2 /* Deferred objects freeing. */
-#define BIO_NUM_OPS       3
+// 后台线程类型
+#define BIO_CLOSE_FILE 0 // 关闭文件，aof close可能很慢
+#define BIO_AOF_FSYNC 1  /* Deferred AOF fsync. */
+#define BIO_LAZY_FREE 2  /* Deferred objects freeing. */
+#define BIO_NUM_OPS 3
