@@ -30,23 +30,27 @@
 #include "server.h"
 #include <unistd.h>
 
-/* Open a child-parent channel used in order to move information about the
- * RDB / AOF saving process from the child to the parent (for instance
- * the amount of copy on write memory used) */
-void openChildInfoPipe(void) {
-    if (pipe(server.child_info_pipe) == -1) {
-        /* On error our two file descriptors should be still set to -1,
-         * but we call anyway cloesChildInfoPipe() since can't hurt. */
+// 创建管道用于父子进程之间传递信息，fileId设置为非阻塞，并初始化子进程端数据为0
+void openChildInfoPipe(void)
+{
+    if (pipe(server.child_info_pipe) == -1)
+    {
+        // 创建管道失败就关闭并置为-1
         closeChildInfoPipe();
-    } else if (anetNonBlock(NULL,server.child_info_pipe[0]) != ANET_OK) {
+    }
+    else if (anetNonBlock(NULL, server.child_info_pipe[0]) != ANET_OK)
+    {
         closeChildInfoPipe();
-    } else {
-        memset(&server.child_info_data,0,sizeof(server.child_info_data));
+    }
+    else
+    {
+        memset(&server.child_info_data, 0, sizeof(server.child_info_data));
     }
 }
 
 /* Close the pipes opened with openChildInfoPipe(). */
-void closeChildInfoPipe(void) {
+void closeChildInfoPipe(void)
+{
     if (server.child_info_pipe[0] != -1 ||
         server.child_info_pipe[1] != -1)
     {
@@ -59,26 +63,36 @@ void closeChildInfoPipe(void) {
 
 /* Send COW data to parent. The child should call this function after populating
  * the corresponding fields it want to sent (according to the process type). */
-void sendChildInfo(int ptype) {
-    if (server.child_info_pipe[1] == -1) return;
+void sendChildInfo(int ptype)
+{
+    if (server.child_info_pipe[1] == -1)
+    {
+        return;
+    }
     server.child_info_data.magic = CHILD_INFO_MAGIC;
     server.child_info_data.process_type = ptype;
     ssize_t wlen = sizeof(server.child_info_data);
-    if (write(server.child_info_pipe[1],&server.child_info_data,wlen) != wlen) {
+    if (write(server.child_info_pipe[1], &server.child_info_data, wlen) != wlen)
+    {
         /* Nothing to do on error, this will be detected by the other side. */
     }
 }
 
 /* Receive COW data from parent. */
-void receiveChildInfo(void) {
-    if (server.child_info_pipe[0] == -1) return;
+void receiveChildInfo(void)
+{
+    if (server.child_info_pipe[0] == -1)
+        return;
     ssize_t wlen = sizeof(server.child_info_data);
-    if (read(server.child_info_pipe[0],&server.child_info_data,wlen) == wlen &&
+    if (read(server.child_info_pipe[0], &server.child_info_data, wlen) == wlen &&
         server.child_info_data.magic == CHILD_INFO_MAGIC)
     {
-        if (server.child_info_data.process_type == CHILD_INFO_TYPE_RDB) {
+        if (server.child_info_data.process_type == CHILD_INFO_TYPE_RDB)
+        {
             server.stat_rdb_cow_bytes = server.child_info_data.cow_size;
-        } else if (server.child_info_data.process_type == CHILD_INFO_TYPE_AOF) {
+        }
+        else if (server.child_info_data.process_type == CHILD_INFO_TYPE_AOF)
+        {
             server.stat_aof_cow_bytes = server.child_info_data.cow_size;
         }
     }

@@ -109,8 +109,7 @@ client *createClient(int fd)
         {
             anetKeepAlive(NULL, fd, server.tcpkeepalive);
         }
-        if (aeCreateFileEvent(server.el, fd, AE_READABLE,
-                              readQueryFromClient, c) == AE_ERR) // 设置读事件处理函数
+        if (aeCreateFileEvent(server.el, fd, AE_READABLE, readQueryFromClient, c) == AE_ERR) // 设置读事件处理函数
         {
             close(fd);
             zfree(c);
@@ -2630,8 +2629,7 @@ void pauseClients(mstime_t end)
  * function checks if the pause time was reached and clear it. */
 int clientsArePaused(void)
 {
-    if (server.clients_paused &&
-        server.clients_pause_end_time < server.mstime)
+    if (server.clients_paused && server.clients_pause_end_time < server.mstime)
     {
         listNode *ln;
         listIter li;

@@ -24,6 +24,11 @@
           "description": "将反汇编风格设置为 Intel",
           "text": "-gdb-set disassembly-flavor intel",
           "ignoreFailures": true
+        },
+        {
+          "description": "Set follow-fork-mode to child",
+          "text": "set follow-fork-mode child",
+          "ignoreFailures": true
         }
       ]
     },

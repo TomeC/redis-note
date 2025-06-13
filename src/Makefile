@@ -270,7 +270,7 @@ distclean: clean
 .PHONY: distclean
 
 test: $(REDIS_SERVER_NAME) $(REDIS_CHECK_AOF_NAME)
-	@(cd ..; ./runtest)
+	@(cd ..; sh ./runtest)
 
 test-sentinel: $(REDIS_SENTINEL_NAME)
 	@(cd ..; ./runtest-sentinel)

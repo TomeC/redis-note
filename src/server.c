@@ -1198,8 +1198,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData)
      * many clients, we want to call serverCron() with an higher frequency. */
     if (server.dynamic_hz)
     {
-        while (listLength(server.clients) / server.hz >
-               MAX_CLIENTS_PER_CLOCK_TICK)
+        while (listLength(server.clients) / server.hz > MAX_CLIENTS_PER_CLOCK_TICK)
         {
             server.hz *= 2;
             if (server.hz > CONFIG_MAX_HZ)
@@ -2219,8 +2218,7 @@ void initServer(void)
 
     if (server.syslog_enabled)
     {
-        openlog(server.syslog_ident, LOG_PID | LOG_NDELAY | LOG_NOWAIT,
-                server.syslog_facility);
+        openlog(server.syslog_ident, LOG_PID | LOG_NDELAY | LOG_NOWAIT, server.syslog_facility);
     }
 
     server.hz = server.config_hz;
@@ -2247,9 +2245,7 @@ void initServer(void)
     server.el = aeCreateEventLoop(server.maxclients + CONFIG_FDSET_INCR); // 1000+32+96
     if (server.el == NULL)
     {
-        serverLog(LL_WARNING,
-                  "Failed creating the event loop. Error message: '%s'",
-                  strerror(errno));
+        serverLog(LL_WARNING, "Failed creating the event loop. Error message: '%s'", strerror(errno));
         exit(1);
     }
     server.db = zmalloc(sizeof(redisDb) * server.dbnum);
@@ -2946,10 +2942,7 @@ int processCommand(client *c)
             return C_ERR;
         }
 
-        /* It was impossible to free enough memory, and the command the client
-         * is trying to execute is denied during OOM conditions or the client
-         * is in MULTI/EXEC context? Error. */
-        // 内存不足时不执行multi command和m标识的命令
+        // 内存不足时不执行multi command和m标识【deny oom】的命令，直接报错
         if (out_of_memory &&
             (c->cmd->flags & CMD_DENYOOM ||
              (c->flags & CLIENT_MULTI && c->cmd->proc != execCommand)))
@@ -4768,17 +4761,22 @@ int main(int argc, char **argv)
             }
         }
         if (server.ipfd_count > 0)
+        {
             serverLog(LL_NOTICE, "Ready to accept connections,count=%d", server.ipfd_count);
+        }
         if (server.sofd > 0)
+        {
             serverLog(LL_NOTICE, "The server is now ready to accept connections at %s", server.unixsocket);
+        }
     }
     else
     {
+        // sentinel模式下，初始化一些资源
         InitServerLast();
         sentinelIsRunning();
     }
 
-    /* Warning the user about suspicious maxmemory setting. */
+    // 提醒用户不合理的内存配置
     if (server.maxmemory > 0 && server.maxmemory < 1024 * 1024)
     {
         serverLog(LL_WARNING, "WARNING: You specified a maxmemory value that is less than 1MB (current value is %llu bytes). Are you sure this is what you really want?", server.maxmemory);

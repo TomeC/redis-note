@@ -76,7 +76,9 @@ void rdbCheckThenExit(int linenum, char *reason, ...)
 static int rdbWriteRaw(rio *rdb, void *p, size_t len)
 {
     if (rdb && rioWrite(rdb, p, len) == 0)
+    {
         return -1;
+    }
     return len;
 }
 
@@ -1412,28 +1414,42 @@ int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi)
     size_t processed = 0;
 
     if (server.rdb_checksum)
+    {
         rdb->update_cksum = rioGenericUpdateChecksum;
+    }
     snprintf(magic, sizeof(magic), "REDIS%04d", RDB_VERSION);
     if (rdbWriteRaw(rdb, magic, 9) == -1)
+    {
         goto werr;
+    }
     if (rdbSaveInfoAuxFields(rdb, flags, rsi) == -1)
+    {
         goto werr;
+    }
     if (rdbSaveModulesAux(rdb, REDISMODULE_AUX_BEFORE_RDB) == -1)
+    {
         goto werr;
+    }
 
     for (j = 0; j < server.dbnum; j++)
     {
         redisDb *db = server.db + j;
         dict *d = db->dict;
         if (dictSize(d) == 0)
+        {
             continue;
+        }
         di = dictGetSafeIterator(d);
 
         /* Write the SELECT DB opcode */
         if (rdbSaveType(rdb, RDB_OPCODE_SELECTDB) == -1)
+        {
             goto werr;
+        }
         if (rdbSaveLen(rdb, j) == -1)
+        {
             goto werr;
+        }
 
         /* Write the RESIZE DB opcode. We trim the size to UINT32_MAX, which
          * is currently the largest type we are able to represent in RDB sizes.
@@ -1443,13 +1459,19 @@ int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi)
         db_size = dictSize(db->dict);
         expires_size = dictSize(db->expires);
         if (rdbSaveType(rdb, RDB_OPCODE_RESIZEDB) == -1)
+        {
             goto werr;
+        }
         if (rdbSaveLen(rdb, db_size) == -1)
+        {
             goto werr;
+        }
         if (rdbSaveLen(rdb, expires_size) == -1)
+        {
             goto werr;
+        }
 
-        /* Iterate this DB writing every entry */
+        // 使用迭代器遍历并保存
         while ((de = dictNext(di)) != NULL)
         {
             sds keystr = dictGetKey(de);
@@ -1459,21 +1481,20 @@ int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi)
             initStaticStringObject(key, keystr);
             expire = getExpire(db, &key);
             if (rdbSaveKeyValuePair(rdb, &key, o, expire) == -1)
+            {
                 goto werr;
+            }
 
-            /* When this RDB is produced as part of an AOF rewrite, move
-             * accumulated diff from parent to child while rewriting in
-             * order to have a smaller final write. */
-            if (flags & RDB_SAVE_AOF_PREAMBLE &&
-                rdb->processed_bytes > processed + AOF_READ_DIFF_INTERVAL_BYTES)
+            // 当前 RDB 持久化操作是为了 AOF 重写而执行的,每隔一定量的数据写入后触发一次 diff 数据读取。
+            if (flags & RDB_SAVE_AOF_PREAMBLE && rdb->processed_bytes > processed + AOF_READ_DIFF_INTERVAL_BYTES)
             {
                 processed = rdb->processed_bytes;
                 aofReadDiffFromParent();
             }
         }
         dictReleaseIterator(di);
-        di = NULL; /* So that we don't release it again on error. */
-    }
+        di = NULL; // 当发生错误时不会再次释放
+    } // db 遍历结束
 
     /* If we are storing the replication information on disk, persist
      * the script cache as well: on successful PSYNC after a restart, we need
@@ -1493,25 +1514,33 @@ int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi)
     }
 
     if (rdbSaveModulesAux(rdb, REDISMODULE_AUX_AFTER_RDB) == -1)
+    {
         goto werr;
+    }
 
-    /* EOF opcode */
     if (rdbSaveType(rdb, RDB_OPCODE_EOF) == -1)
+    {
         goto werr;
+    }
 
-    /* CRC64 checksum. It will be zero if checksum computation is disabled, the
-     * loading code skips the check in this case. */
+    // CRC64校验码，如果禁用校验，则为零。加载代码在此情况下跳过检查。
     cksum = rdb->cksum;
     memrev64ifbe(&cksum);
     if (rioWrite(rdb, &cksum, 8) == 0)
+    {
         goto werr;
+    }
     return C_OK;
 
 werr:
     if (error)
+    {
         *error = errno;
+    }
     if (di)
+    {
         dictReleaseIterator(di);
+    }
     return C_ERR;
 }
 
@@ -1549,7 +1578,7 @@ werr: /* Write error. */
     return C_ERR;
 }
 
-/* Save the DB on disk. Return C_ERR on error, C_OK on success. */
+// 保存DB到磁盘，成功返回C_OK，失败返回C_ERR
 int rdbSave(char *filename, rdbSaveInfo *rsi)
 {
     char tmpfile[256];
@@ -1585,16 +1614,21 @@ int rdbSave(char *filename, rdbSaveInfo *rsi)
         goto werr;
     }
 
-    /* Make sure data will not remain on the OS's output buffers */
+    // 确保数据没有被os缓存
     if (fflush(fp) == EOF)
+    {
         goto werr;
+    }
     if (fsync(fileno(fp)) == -1)
+    {
         goto werr;
+    }
     if (fclose(fp) == EOF)
+    {
         goto werr;
+    }
 
-    /* Use RENAME to make sure the DB file is changed atomically only
-     * if the generate DB file is ok. */
+    // 使用rename确保只有生成的db文件成功才会被自动修改
     if (rename(tmpfile, filename) == -1)
     {
         char *cwdp = getcwd(cwd, MAXPATHLEN);

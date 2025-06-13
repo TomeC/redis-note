@@ -304,7 +304,7 @@ proc read_from_test_client fd {
         puts $err
         lappend ::failed_tests $err
         set ::active_clients_task($fd) "(ERR) $data"
-            if {$::stop_on_failure} {
+        if {$::stop_on_failure} {
             puts -nonewline "(Test stopped, press enter to continue)"
             flush stdout
             gets stdin
@@ -630,7 +630,8 @@ proc is_a_slow_computer {} {
     set elapsed [expr [clock milliseconds]-$start]
     expr {$elapsed > 200}
 }
-
+# 默认是0，如果设置为1就是测试客户端
+# ::client表示全局变量的client
 if {$::client} {
     if {[catch { test_client_main $::test_server_port } err]} {
         set estr "Executing test client: $err.\n$::errorInfo"

@@ -25,7 +25,8 @@
     "memory": "c",
     "optional": "c",
     "system_error": "c",
-    "thread": "c"
+    "thread": "c",
+    "server.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "cl.exe",

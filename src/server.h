@@ -934,13 +934,13 @@ struct redisMemOverhead
  * top-level master. */
 typedef struct rdbSaveInfo
 {
-    /* Used saving and loading. */
+    // 保存和加载时使用
     int repl_stream_db; /* DB to select in server.master client. */
 
-    /* Used only loading. */
-    int repl_id_is_set;                   /* True if repl_id field is set. */
-    char repl_id[CONFIG_RUN_ID_SIZE + 1]; /* Replication ID. */
-    long long repl_offset;                /* Replication offset. */
+    // 只有在加载时使用
+    int repl_id_is_set;                   // 如果repl_id被设置就是true
+    char repl_id[CONFIG_RUN_ID_SIZE + 1]; // 复制id
+    long long repl_offset;                // 偏移量
 } rdbSaveInfo;
 
 #define RDB_SAVE_INFO_INIT {-1, 0, "000000000000000000000000000000", -1}
@@ -986,7 +986,7 @@ struct redisServer
     dict *commands;      /* Command table */
     dict *orig_commands; /* Command table before command renaming. */
     aeEventLoop *el;
-    unsigned int lruclock;              /* Clock for LRU eviction */
+    unsigned int lruclock;              // lru淘汰键值的时钟
     int shutdown_asap;                  /* SHUTDOWN needed ASAP */
     int activerehashing;                /* Incremental rehash in serverCron() */
     int active_defrag_running;          /* Active defragmentation running (holds current scan aggressiveness) */
