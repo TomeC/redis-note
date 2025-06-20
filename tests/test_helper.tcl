@@ -628,6 +628,7 @@ proc is_a_slow_computer {} {
     set start [clock milliseconds]
     for {set j 0} {$j < 1000000} {incr j} {}
     set elapsed [expr [clock milliseconds]-$start]
+    puts "1000000 iterations in $elapsed ms"
     expr {$elapsed > 200}
 }
 # 默认是0，如果设置为1就是测试客户端

@@ -31,6 +31,6 @@ Makefile.dep
 sdsmain
 dictmain
 *.aof
-test.c
 a.out
 *.rdb
+tests/tmp/

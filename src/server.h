@@ -188,7 +188,7 @@ typedef long long ustime_t; /* microsecond time type. */
 #define PROTO_INLINE_MAX_SIZE (1024 * 64)           /* Max size of inline reads */
 #define PROTO_MBULK_BIG_ARG (1024 * 32)
 #define LONG_STR_SIZE 21                        /* Bytes needed for long -> str + '\0' */
-#define REDIS_AUTOSYNC_BYTES (1024 * 1024 * 32) /* fdatasync every 32MB */
+#define REDIS_AUTOSYNC_BYTES (1024 * 1024 * 32) //每32MB同步一次
 
 #define LIMIT_PENDING_QUERYBUF (4 * 1024 * 1024) /* 4mb */
 
@@ -1124,7 +1124,7 @@ struct redisServer
     int aof_lastbgrewrite_status;      /* C_OK or C_ERR */
     unsigned long aof_delayed_fsync;   /* delayed AOF fsync() counter */
     int aof_rewrite_incremental_fsync; /* fsync incrementally while aof rewriting? */
-    int rdb_save_incremental_fsync;    /* fsync incrementally while rdb saving? */
+    int rdb_save_incremental_fsync;    // rdb文件保存的时候是否 fsync 同步数据到磁盘
     int aof_last_write_status;         /* C_OK or C_ERR */
     int aof_last_write_errno;          /* Valid if aof_last_write_status is ERR */
     int aof_load_truncated;            /* Don't stop on unexpected AOF EOF. */

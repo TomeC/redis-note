@@ -57,7 +57,7 @@ struct _rio
     /* number of bytes read or written */
     size_t processed_bytes;
 
-    /* maximum single read or write chunk size */
+    /* 单次读取或写入操作的最大数据块大小 */
     size_t max_processing_chunk;
 
     /* Backend-specific vars. */

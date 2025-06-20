@@ -1321,7 +1321,7 @@ ssize_t rdbSaveAuxFieldStrInt(rio *rdb, char *key, long long val)
     return rdbSaveAuxField(rdb, key, strlen(key), buf, vlen);
 }
 
-/* Save a few default AUX fields with information about the RDB generated. */
+/* 为 RDB 文件添加附加元数据 */
 int rdbSaveInfoAuxFields(rio *rdb, int flags, rdbSaveInfo *rsi)
 {
     int redis_bits = (sizeof(void *) == 8) ? 64 : 32;
@@ -1396,14 +1396,8 @@ ssize_t rdbSaveSingleModuleAux(rio *rdb, int when, moduleType *mt)
     return io.bytes;
 }
 
-/* Produces a dump of the database in RDB format sending it to the specified
- * Redis I/O channel. On success C_OK is returned, otherwise C_ERR
- * is returned and part of the output, or all the output, can be
- * missing because of I/O errors.
- *
- * When the function returns C_ERR and if 'error' is not NULL, the
- * integer pointed by 'error' is set to the value of errno just after the I/O
- * error. */
+// 该函数用于将数据库以RDB格式转储并通过指定的Redis I/O通道发送。
+// 若成功返回C_OK，否则返回C_ERR并可能设置errno错误码。
 int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi)
 {
     dictIterator *di = NULL;
@@ -1582,7 +1576,7 @@ werr: /* Write error. */
 int rdbSave(char *filename, rdbSaveInfo *rsi)
 {
     char tmpfile[256];
-    char cwd[MAXPATHLEN]; /* Current working dir path for error messages. */
+    char cwd[MAXPATHLEN];
     FILE *fp;
     rio rdb;
     int error = 0;
@@ -1591,16 +1585,13 @@ int rdbSave(char *filename, rdbSaveInfo *rsi)
     fp = fopen(tmpfile, "w");
     if (!fp)
     {
-        char *cwdp = getcwd(cwd, MAXPATHLEN);
+        char *cwdp = getcwd(cwd, MAXPATHLEN); // 当前工作目录
         serverLog(LL_WARNING,
-                  "Failed opening the RDB file %s (in server root dir %s) "
-                  "for saving: %s",
-                  filename,
-                  cwdp ? cwdp : "unknown",
-                  strerror(errno));
+                  "Failed opening the RDB file %s (in server root dir %s) for saving: %s",
+                  filename, cwdp ? cwdp : "unknown", strerror(errno));
         return C_ERR;
     }
-
+    // 初始化rdb
     rioInitWithFile(&rdb, fp);
 
     if (server.rdb_save_incremental_fsync)
@@ -1633,12 +1624,8 @@ int rdbSave(char *filename, rdbSaveInfo *rsi)
     {
         char *cwdp = getcwd(cwd, MAXPATHLEN);
         serverLog(LL_WARNING,
-                  "Error moving temp DB file %s on the final "
-                  "destination %s (in server root dir %s): %s",
-                  tmpfile,
-                  filename,
-                  cwdp ? cwdp : "unknown",
-                  strerror(errno));
+                  "Error moving temp DB file %s on the final destination %s (in server root dir %s): %s",
+                  tmpfile, filename, cwdp ? cwdp : "unknown", strerror(errno));
         unlink(tmpfile);
         return C_ERR;
     }
@@ -3022,8 +3009,8 @@ void bgsaveCommand(client *c)
 {
     int schedule = 0;
 
-    /* The SCHEDULE option changes the behavior of BGSAVE when an AOF rewrite
-     * is in progress. Instead of returning an error a BGSAVE gets scheduled. */
+    // 当启用SCHEDULE选项时，若AOF重写正在进行，BGSAVE不会返回错误；
+    // 而是将RDB持久化操作（BGSAVE）推迟到AOF重写完成后执行。
     if (c->argc > 1)
     {
         if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr, "schedule"))
